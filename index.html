@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sky-GenAI Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .chat-container {
+            width: 90%;
+            max-width: 500px;
+            margin: 20px auto;
+            background: #333;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        .messages {
+            height: 300px;
+            overflow-y: auto;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid #555;
+        }
+        .message {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .user { background: #007bff; color: #fff; text-align: right; }
+        .ai { background: #28a745; color: #fff; text-align: left; }
+        .input-area {
+            display: flex;
+            padding-top: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px;
+            background: #ff6600;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-left: 5px;
+            border-radius: 5px;
+        }
+        button:hover { background: #ff4500; }
+    </style>
+</head>
+<body>
+
+    <h1>Sky-GenAI Chat</h1>
+    <div class="chat-container">
+        <div class="messages" id="messages"></div>
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <h3>API Key Setup</h3>
+    <button onclick="saveApiKey()">Save API Key</button>
+    <button onclick="clearApiKey()">Clear Key</button>
+    
+    <script>
+        let apiKey = localStorage.getItem("gemini_api_key") || "";
+
+        function saveApiKey() {
+            apiKey = "AIzaSyBbJ8tscBJDEu6jz9c_O3KvyDBpAEvOPiQ";
+            localStorage.setItem("gemini_api_key", apiKey);
+            alert("API Key Saved!");
+        }
+
+        function clearApiKey() {
+            localStorage.removeItem("gemini_api_key");
+            apiKey = "";
+            alert("API Key Cleared!");
+        }
+
+        async function sendMessage() {
+            const inputField = document.getElementById("messageInput");
+            const message = inputField.value.trim();
+            if (message === "") return;
+
+            displayMessage("You: " + message, "user");
+            inputField.value = "";
+
+            //if (!message.startsWith("-")) return;  // Only send if prefixed with "-"
+
+            if (!apiKey) {
+                displayMessage("⚠️ Please set an API key first!", "ai");
+                return;
+            }
+
+            try {
+                const response = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + apiKey, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: message.substring(1) }] }] })
+                });
+
+                const data = await response.json();
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error: No response.";
+                displayMessage("Zephyr: " + reply, "ai");
+
+            } catch (error) {
+                displayMessage("⚠️ Error: " + error.message, "ai");
+            }
+        }
+
+        function displayMessage(text, type) {
+            const messagesDiv = document.getElementById("messages");
+            const messageElem = document.createElement("div");
+            messageElem.classList.add("message", type);
+            messageElem.textContent = text;
+            messagesDiv.appendChild(messageElem);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+
+</body>
+</html>
